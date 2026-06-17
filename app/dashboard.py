@@ -29,7 +29,6 @@ pagina = st.sidebar.radio(
         "Dados das Cidades",
         "Estatística",
         "Machine Learning",
-        "Álgebra Linear",
         "Bioinformática"
     ]
 )
@@ -280,21 +279,6 @@ elif pagina == "Machine Learning":
         use_container_width=True
     )
 
-
-    st.success(
-        """
-        O PM2.5 foi a variável com maior influência no modelo,
-        representando aproximadamente 64% da importância total.
-        """
-    )
-
-
-# ==========================
-# ÁLGEBRA LINEAR
-# ==========================
-
-elif pagina == "Álgebra Linear":
-
     st.title("Álgebra Linear e Análise Espectral")
 
     st.write("""
@@ -516,6 +500,94 @@ elif pagina == "Álgebra Linear":
     Os autovetores definem as novas direções do espaço 
     matemático utilizadas para comparar os perfis de 
     poluição entre Fortaleza, Sobral e São Paulo.
+    """)
+
+
+    st.success(
+        """
+        O PM2.5 foi a variável com maior influência no modelo,
+        representando aproximadamente 64% da importância total.
+        """
+    )
+        # ==========================
+    # BASE MATEMÁTICA - ÁLGEBRA LINEAR
+    # ==========================
+
+    st.divider()
+
+    st.header("Base Matemática: Álgebra Linear")
+
+    st.write("""
+    O Machine Learning representa os dados ambientais
+    como estruturas matemáticas chamadas matrizes.
+
+    Cada linha representa uma observação e cada coluna
+    representa uma variável ambiental.
+    """)
+
+    df = pd.read_csv(
+        "data/cities_pollution_diabetes.csv"
+    )
+
+
+    variaveis = [
+        "PM25",
+        "PM10",
+        "NO2",
+        "O3",
+        "Temperatura",
+        "Umidade"
+    ]
+
+
+    X = df[variaveis]
+
+
+    st.subheader("Matriz de dados X")
+
+    st.dataframe(X)
+
+
+    st.write("""
+    A partir dessa matriz, calculamos relações matemáticas
+    entre as variáveis.
+    """)
+
+
+    # Correlação
+
+    st.subheader("Matriz de Correlação")
+
+
+    corr = X.corr()
+
+
+    fig_corr = px.imshow(
+        corr,
+        text_auto=True,
+        title="Correlação entre variáveis ambientais",
+        color_continuous_scale="RdBu"
+    )
+
+
+    st.plotly_chart(
+        fig_corr,
+        use_container_width=True
+    )
+
+
+    st.write("""
+    A correlação varia de -1 até 1.
+
+    Valores próximos de 1 indicam que duas variáveis
+    crescem juntas.
+
+    Valores próximos de -1 indicam uma relação inversa.
+
+    Exemplo:
+    A temperatura apresentou correlação negativa
+    com alguns poluentes, indicando que nesse conjunto
+    de dados eles variam em sentidos opostos.
     """)
 
 # ==========================
@@ -1004,292 +1076,74 @@ elif pagina == "Bioinformática":
         )
         st.divider()
 
-    st.subheader(
-        "4. Geometria molecular atômica: Insulina normal vs exposta à poluição"
-    )
+        # ==========================
+    # MAPA AMBIENTAL
+    # ==========================
+
+    st.title("Distribuição Geográfica: Poluição e Diabetes")
 
     st.write("""
-    Esta visualização representa a geometria molecular em nível atômico.
-    Cada esfera representa um átomo e as linhas representam ligações químicas aproximadas.
-
-    A estrutura da direita apresenta uma simulação de alteração estrutural causada por exposição prolongada à poluição atmosférica.
+    Mapa mostrando a distribuição das variáveis ambientais
+    e sua relação com indicadores de diabetes.
     """)
 
 
-    # ===============================
-    # Coletar todos os átomos reais
-    # ===============================
+    import pandas as pd
+    import plotly.express as px
 
-    x_real = []
-    y_real = []
-    z_real = []
 
-    cores = []
-    elementos = []
+    df = pd.read_csv(
+        "data/cities_pollution_diabetes.csv"
+    )
 
 
-    for atomo in estrutura.get_atoms():
+    resumo = df.groupby(
+        "Cidade"
+    ).agg({
+        "PM25": "mean",
+        "Diabetes": "mean"
+    }).reset_index()
 
-        coord = atomo.get_coord()
 
-        x_real.append(coord[0])
-        y_real.append(coord[1])
-        z_real.append(coord[2])
+    coordenadas = {
+        "Fortaleza": (-3.7319, -38.5267),
+        "Sobral": (-3.6891, -40.3488),
+        "Sao Paulo": (-23.5505, -46.6333)
+    }
 
-        elemento = atomo.element
 
-        elementos.append(elemento)
+    resumo["lat"] = resumo["Cidade"].apply(
+        lambda x: coordenadas[x][0]
+    )
 
+    resumo["lon"] = resumo["Cidade"].apply(
+        lambda x: coordenadas[x][1]
+    )
 
-        if elemento == "C":
-            cores.append("gray")
 
-        elif elemento == "O":
-            cores.append("red")
+    fig = px.scatter_geo(
+    resumo,
+    lat="lat",
+    lon="lon",
+    size="PM25",
+    size_max=40,
+    color="Diabetes",
+    color_continuous_scale="Cividis",
+    hover_name="Cidade",
+    title="PM2.5 e Diabetes por cidade",
+    height=700,
+    width=1000
+)
 
-        elif elemento == "N":
-            cores.append("blue")
 
-        elif elemento == "S":
-            cores.append("yellow")
+    fig.update_geos(
+    scope="south america",
+    fitbounds="locations",
+    visible=True
+)
 
-        else:
-            cores.append("white")
 
-
-    # ===============================
-    # Criar estrutura alterada
-    # ===============================
-
-    x_alt = []
-    y_alt = []
-    z_alt = []
-
-
-    for i in range(len(x_real)):
-
-        fator = np.random.normal(
-            0,
-            0.8
-        )
-
-        x_alt.append(
-            x_real[i] + fator
-        )
-
-        y_alt.append(
-            y_real[i] + fator
-        )
-
-        z_alt.append(
-            z_real[i] + fator
-        )
-
-
-    # ===============================
-    # Função para desenhar ligações
-    # ===============================
-
-    def criar_ligacoes(fig, x, y, z):
-
-        quantidade = len(x)
-
-
-        for i in range(quantidade):
-
-            for j in range(i+1, quantidade):
-
-                distancia = sqrt(
-                    (x[i]-x[j])**2 +
-                    (y[i]-y[j])**2 +
-                    (z[i]-z[j])**2
-                )
-
-
-                # distância aproximada de ligação
-                if distancia < 1.8:
-
-                    fig.add_trace(
-                        go.Scatter3d(
-                            x=[x[i], x[j]],
-                            y=[y[i], y[j]],
-                            z=[z[i], z[j]],
-
-                            mode="lines",
-
-                            line=dict(
-                                color="white",
-                                width=4
-                            ),
-
-                            showlegend=False
-                        )
-                    )
-    def adicionar_legenda(fig):
-
-        elementos = [
-            ("Carbono (C)", "gray"),
-            ("Oxigênio (O)", "red"),
-            ("Nitrogênio (N)", "blue"),
-            ("Enxofre (S)", "yellow"),
-            ("Hidrogênio / Outros", "white")
-        ]
-
-        for nome, cor in elementos:
-
-            fig.add_trace(
-                go.Scatter3d(
-                    x=[None],
-                    y=[None],
-                    z=[None],
-                    mode="markers",
-
-                    marker=dict(
-                        size=8,
-                        color=cor
-                    ),
-
-                    name=nome,
-                    showlegend=True
-                )
-            )
-
-
-
-    # ===============================
-    # Criar colunas lado a lado
-    # ===============================
-
-    col1, col2 = st.columns(2)
-
-
-# -------------------------------
-# INSULINA NORMAL
-# -------------------------------
-
-    with col1:
-
-        st.markdown("### Insulina normal")
-
-        fig_normal = go.Figure()
-
-        criar_ligacoes(
-            fig_normal,
-            x_real,
-            y_real,
-            z_real
-        )
-
-        fig_normal.add_trace(
-            go.Scatter3d(
-                x=x_real,
-                y=y_real,
-                z=z_real,
-                mode="markers",
-                marker=dict(
-                    size=5,
-                    color=cores
-                ),
-                text=elementos,
-                name="Átomos"
-            )
-        )
-
-        # Legenda dos elementos
-        adicionar_legenda(fig_normal)
-
-        fig_normal.update_layout(
-            height=600,
-
-            showlegend=True,
-
-            legend=dict(
-                bgcolor="rgba(0,0,0,0.6)",
-                font=dict(
-                    color="white",
-                    size=12
-                )
-            ),
-
-            scene=dict(
-                bgcolor="black"
-            )
-        )
-
-        st.plotly_chart(
-            fig_normal,
-            use_container_width=True
-        )
-
-
-    # -------------------------------
-    # INSULINA ALTERADA
-    # -------------------------------
-
-    with col2:
-
-        st.markdown("### Exposição prolongada à poluição")
-
-        fig_alt = go.Figure()
-
-        criar_ligacoes(
-            fig_alt,
-            x_alt,
-            y_alt,
-            z_alt
-        )
-
-        fig_alt.add_trace(
-            go.Scatter3d(
-                x=x_alt,
-                y=y_alt,
-                z=z_alt,
-                mode="markers",
-                marker=dict(
-                    size=5,
-                    color=cores
-                ),
-                text=elementos,
-                name="Átomos alterados"
-            )
-        )
-
-        # Legenda dos elementos
-        adicionar_legenda(fig_alt)
-
-        fig_alt.update_layout(
-            height=600,
-
-            showlegend=True,
-
-            legend=dict(
-                bgcolor="rgba(0,0,0,0.6)",
-                font=dict(
-                    color="white",
-                    size=12
-                )
-            ),
-
-            scene=dict(
-                bgcolor="black"
-            )
-        )
-
-        st.plotly_chart(
-            fig_alt,
-            use_container_width=True
-        )
-
-
-    st.success(
-        """
-        Comparação concluída:
-
-        A estrutura da esquerda representa a conformação
-        molecular original da insulina.
-
-        A estrutura da direita representa uma simulação de
-        alteração geométrica causada pelo estresse oxidativo
-        associado à exposição prolongada à poluição atmosférica.
-        """
+    st.plotly_chart(
+        fig,
+        use_container_width=True
     )
